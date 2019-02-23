@@ -2,20 +2,34 @@ const path = require('path');
 const fs = require('fs');
 const copyFile = require('./modules/copyFile');
 
-const base = path.normalize('../input');
-
-const readDir = base => {
-  const files = fs.readdirSync(base);
-
-  files.forEach(item => {
-    let localBase = path.join(base, item);
-    let state = fs.statSync(localBase);
-    if (state.isDirectory()) {
-      readDir(localBase);
-    } else {
-      copyFile(localBase);
-    }
+const getFiles = (pathFile) => {
+  return new Promise((resolve, reject) => {
+    fs.readdir(pathFile, (err, files) => {
+      if (err) reject(err);
+      else {
+        files.forEach(item => {
+          let localBase = path.join(pathFile, item);
+          fs.stat(localBase, (err, stats) => {
+            if (err) reject(err);
+            if (stats.isDirectory()) {
+              getFiles(localBase);
+            } else {
+              copyFile(localBase);
+            }
+          });
+        });
+      }
+      resolve('Файлы отсортированы');
+    });
   });
 };
 
-readDir(base, 0);
+const base = path.normalize('../input');
+
+getFiles(base)
+  .then(message => {
+    console.log(message);
+  })
+  .catch(e => {
+    console.log(e);
+  });
