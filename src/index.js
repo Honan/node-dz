@@ -1,35 +1,46 @@
-const path = require('path');
-const fs = require('fs');
-const copyFile = require('./modules/copyFile');
+const http = require('http');
+const url = require('url');
 
-const getFiles = (pathFile) => {
-  return new Promise((resolve, reject) => {
-    fs.readdir(pathFile, (err, files) => {
-      if (err) reject(err);
-      else {
-        files.forEach(item => {
-          let localBase = path.join(pathFile, item);
-          fs.stat(localBase, (err, stats) => {
-            if (err) reject(err);
-            if (stats.isDirectory()) {
-              getFiles(localBase);
-            } else {
-              copyFile(localBase);
-            }
-          });
-        });
+http
+  .createServer((req, res) => {
+    if (req.method === 'GET') {
+      const parse = url.parse(req.url, true).query;
+
+      let { count, interval } = parse;
+
+      if (typeof count === 'undefined' || typeof interval === 'undefined') {
+        console.log('Count и interval не заданы');
+        return;
       }
-      resolve('Файлы отсортированы');
-    });
-  });
-};
 
-const base = path.normalize('../input');
+      count = Number(count);
+      interval = Number(interval);
 
-getFiles(base)
-  .then(message => {
-    console.log(message);
+      if (count < 1 || interval < 0) {
+        console.log('Count и interval должны быть больше нуля');
+        return;
+      }
+
+      let promise = new Promise(resolve => {
+        var i = 1;
+        const myTimer = () => {
+          if (i === count) {
+            clearInterval(myVar);
+            resolve();
+          }
+          console.log(new Date(new Date().toUTCString()));
+          ++i;
+        };
+
+        let myVar = setInterval(myTimer, interval);
+      });
+
+      promise
+        .then(() => {
+          console.log('Остановка консольного ввода ' + new Date(new Date().toUTCString()));
+          res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8' });
+          res.end('');
+        });
+    }
   })
-  .catch(e => {
-    console.log(e);
-  });
+  .listen(3000, () => console.log('Сервер запущен'));
